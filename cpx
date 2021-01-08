@@ -1,0 +1,22 @@
+#!/bin/bash
+rm -r *.cpx
+base=""
+for airfoil in "${@:2}"
+do
+	cmd="${1// /}"
+	base+="\nload $airfoil.dat\noper\n$1\ncpwr $airfoil.$cmd.cpx\n"
+done
+base+="\nquit\n"
+printf "$base" | xfoil
+gnuplot -persist <<-EOFMarker
+	FILES = system("ls -1 *.cpx")
+	LABEL = system("ls -1 *.cpx | sed 's/\.cpx//'")
+	set term qt
+	set yrange[1: -2]
+	set xrange[0:1]
+	set grid xtics ytics
+	plot for [i=1:words(FILES)] word(FILES,i) u 1:2 title word(LABEL,i) w l
+	set terminal png
+	set output 'cpx.png'
+	replot
+EOFMarker
